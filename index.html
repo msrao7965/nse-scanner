@@ -1,0 +1,573 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NSE AI Scanner</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#070809;--bg2:#0e1014;--bg3:#141720;--bg4:#1b2030;
+  --b:rgba(255,255,255,0.06);--b2:rgba(255,255,255,0.11);--b3:rgba(255,255,255,0.18);
+  --tx:#dde2ef;--mu:#5a6070;--mu2:#8892a4;
+  --G:#00e5a0;--Gd:rgba(0,229,160,0.08);--Gb:rgba(0,229,160,0.2);
+  --R:#ff4060;--Rd:rgba(255,64,96,0.08);--Rb:rgba(255,64,96,0.2);
+  --A:#ffb020;--Ad:rgba(255,176,32,0.1);--Ab:rgba(255,176,32,0.22);
+  --B:#4d9fff;--P:#a78bfa;--O:#ff7d40;
+  --mono:'JetBrains Mono',monospace;--sans:'Syne',sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:var(--bg);color:var(--tx);font-family:var(--sans);min-height:100vh;overflow-x:hidden;}
+a{color:var(--B);text-decoration:none;}
+
+/* ─── SETUP ─────────────────────────────────────────── */
+#setup{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;}
+.sc{width:100%;max-width:560px;background:var(--bg2);border:1px solid var(--b2);border-radius:20px;padding:36px 32px;}
+.brand{display:flex;align-items:center;gap:10px;margin-bottom:26px;}
+.bmark{width:30px;height:30px;background:var(--G);border-radius:8px;display:flex;align-items:center;justify-content:center;}
+.bmark svg{width:16px;height:16px;}
+.bname{font-size:13px;font-weight:800;letter-spacing:.05em;}
+.ftag{font-size:10px;padding:2px 8px;border-radius:4px;background:var(--Gd);color:var(--G);border:1px solid var(--Gb);font-family:var(--mono);margin-left:4px;}
+.sh1{font-size:24px;font-weight:800;line-height:1.2;margin-bottom:8px;}
+.ssub{font-size:12px;color:var(--mu2);line-height:1.65;margin-bottom:20px;}
+
+.sstack{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:20px;}
+.ssi{background:var(--bg3);border:0.5px solid var(--b2);border-radius:10px;padding:11px 13px;}
+.ssi-l{font-size:9px;color:var(--mu);text-transform:uppercase;letter-spacing:.06em;margin-bottom:3px;}
+.ssi-v{font-size:12px;font-weight:500;}
+.ssi-f{font-size:10px;color:var(--G);margin-top:2px;}
+
+.stitle{font-size:10px;color:var(--mu2);letter-spacing:.06em;text-transform:uppercase;margin-bottom:7px;margin-top:16px;}
+.ig{display:flex;flex-direction:column;gap:5px;margin-bottom:8px;}
+.ig2{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;}
+.ilbl{font-size:10px;color:var(--mu2);letter-spacing:.05em;text-transform:uppercase;}
+.inp{background:var(--bg3);border:1px solid var(--b2);border-radius:8px;padding:10px 12px;font-family:var(--mono);font-size:12px;color:var(--tx);outline:none;transition:border-color .2s;width:100%;}
+.inp:focus{border-color:var(--G);}
+.inp::placeholder{color:var(--mu);}
+.ihint{font-size:11px;color:var(--mu);line-height:1.6;margin-bottom:4px;}
+
+.go-btn{width:100%;background:var(--G);color:#000;border:none;border-radius:10px;padding:14px;font-family:var(--sans);font-size:14px;font-weight:700;cursor:pointer;letter-spacing:.04em;transition:opacity .15s;margin-top:14px;}
+.go-btn:hover{opacity:.85;}.go-btn:disabled{opacity:.4;cursor:not-allowed;}
+.err{color:var(--R);font-size:12px;margin-top:8px;display:none;line-height:1.6;}
+.ok{color:var(--G);font-size:12px;margin-top:8px;display:none;}
+
+/* ─── APP ────────────────────────────────────────────── */
+#app{display:none;}
+.top{background:var(--bg2);border-bottom:1px solid var(--b);height:52px;display:flex;align-items:center;justify-content:space-between;padding:0 20px;position:sticky;top:0;z-index:99;}
+.tl{display:flex;align-items:center;gap:10px;}
+.ld{width:7px;height:7px;border-radius:50%;background:var(--G);animation:blink 1.5s infinite;}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.1}}
+.tname{font-size:12px;font-weight:800;letter-spacing:.06em;}
+.tbgs{display:flex;gap:5px;}
+.tbg{font-size:9px;padding:2px 7px;border-radius:4px;font-family:var(--mono);}
+.tbg-a{background:rgba(255,125,64,.1);color:var(--O);border:1px solid rgba(255,125,64,.2);}
+.tbg-g{background:rgba(77,159,255,.1);color:var(--B);border:1px solid rgba(77,159,255,.2);}
+.tbg-f{background:var(--Gd);color:var(--G);border:1px solid var(--Gb);}
+.tr2{display:flex;align-items:center;gap:8px;}
+.chip{font-family:var(--mono);font-size:10px;color:var(--mu2);background:var(--bg3);border:1px solid var(--b);padding:4px 9px;border-radius:6px;}
+.rbtn{background:var(--G);color:#000;border:none;border-radius:7px;padding:6px 14px;font-family:var(--sans);font-size:11px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:5px;transition:opacity .15s;}
+.rbtn:hover{opacity:.85;}.rbtn:disabled{opacity:.4;cursor:not-allowed;}
+@keyframes spin{to{transform:rotate(360deg)}}
+.spin{display:inline-block;animation:spin .7s linear infinite;}
+
+.rib{background:var(--bg2);border-bottom:1px solid var(--b);padding:9px 20px;display:flex;gap:24px;overflow-x:auto;scrollbar-width:none;}
+.rib::-webkit-scrollbar{display:none;}
+.ri{display:flex;flex-direction:column;gap:1px;min-width:94px;flex-shrink:0;}
+.ri-l{font-size:9px;color:var(--mu);letter-spacing:.06em;text-transform:uppercase;}
+.ri-v{font-family:var(--mono);font-size:12px;font-weight:600;}
+.ri-s{font-size:10px;}
+.up{color:var(--G)}.dn{color:var(--R)}.am{color:var(--A)}.bl{color:var(--B)}.or{color:var(--O)}
+
+.main{max-width:1300px;margin:0 auto;padding:18px 20px 48px;}
+
+/* Regime banner */
+.reg{border-radius:14px;padding:14px 18px;margin-bottom:16px;display:flex;align-items:center;gap:14px;border:1px solid;transition:all .5s;}
+.reg.br{background:var(--Gd);border-color:var(--Gb);}
+.reg.rr{background:var(--Rd);border-color:var(--Rb);}
+.reg.nr{background:var(--Ad);border-color:var(--Ab);}
+.reg-ico{width:40px;height:40px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;}
+.ri-bull{background:var(--Gd);border:1px solid var(--Gb);}
+.ri-bear{background:var(--Rd);border:1px solid var(--Rb);}
+.ri-neu{background:var(--Ad);border:1px solid var(--Ab);}
+.reg-body{flex:1;min-width:0;}
+.reg-title{font-size:14px;font-weight:700;margin-bottom:3px;}
+.reg-desc{font-size:11px;color:var(--mu2);line-height:1.5;}
+.reg-bdg{font-family:var(--mono);font-size:11px;font-weight:600;padding:5px 12px;border-radius:7px;white-space:nowrap;flex-shrink:0;}
+.rb-b{background:var(--Gd);color:var(--G);border:1px solid var(--Gb);}
+.rb-r{background:var(--Rd);color:var(--R);border:1px solid var(--Rb);}
+.rb-n{background:var(--Ad);color:var(--A);border:1px solid var(--Ab);}
+
+/* AI box */
+.aibox{background:var(--bg2);border:1px solid var(--b2);border-radius:14px;padding:16px 18px;margin-bottom:16px;}
+.aihdr{display:flex;align-items:center;gap:7px;margin-bottom:9px;flex-wrap:wrap;}
+.ailbl{font-size:10px;font-weight:600;color:var(--P);letter-spacing:.07em;text-transform:uppercase;}
+.aibdg{font-size:9px;padding:2px 7px;border-radius:4px;background:rgba(77,159,255,.1);color:var(--B);border:1px solid rgba(77,159,255,.2);}
+.aifree{font-size:9px;padding:2px 7px;border-radius:4px;background:var(--Gd);color:var(--G);border:1px solid var(--Gb);font-family:var(--mono);}
+.aith{display:flex;align-items:center;gap:8px;color:var(--mu);font-size:11px;font-family:var(--mono);}
+.dots{display:inline-flex;gap:3px;}
+.dot{width:4px;height:4px;border-radius:50%;background:var(--B);animation:dp 1.2s infinite;}
+.dot:nth-child(2){animation-delay:.2s}.dot:nth-child(3){animation-delay:.4s}
+@keyframes dp{0%,80%,100%{opacity:.2}40%{opacity:1}}
+.aitext{font-size:12px;color:var(--mu2);line-height:1.75;}
+.aitext p{margin-bottom:9px;}.aitext p:last-child{margin-bottom:0;}
+
+/* Stock grid */
+.cols{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+@media(max-width:860px){.cols{grid-template-columns:1fr;}}
+.clbl{font-size:10px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;margin-bottom:11px;display:flex;align-items:center;gap:7px;}
+.clbl.bl{color:var(--G)}.clbl.br{color:var(--R)}
+.cline{flex:1;height:1px;}
+.cl-g{background:var(--Gb)}.cl-r{background:var(--Rb)}
+
+/* Stock card */
+.scard{background:var(--bg2);border:1px solid var(--b);border-radius:12px;padding:14px;margin-bottom:9px;position:relative;overflow:hidden;transition:border-color .2s,transform .15s;animation:fu .4s ease forwards;opacity:0;}
+@keyframes fu{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+.scard:hover{border-color:var(--b3);transform:translateY(-1px);}
+.sc-bull{border-left:2px solid var(--G);}.sc-bear{border-left:2px solid var(--R);}
+
+.abadge{position:absolute;top:10px;right:10px;font-size:9px;font-weight:700;padding:2px 6px;border-radius:4px;letter-spacing:.05em;}
+.ab-g{background:var(--Gd);color:var(--G);border:1px solid var(--Gb);}
+.ab-r{background:var(--Rd);color:var(--R);border:1px solid var(--Rb);}
+.rankn{position:absolute;top:10px;right:10px;font-family:var(--mono);font-size:10px;color:var(--mu);}
+
+.sct{display:flex;align-items:flex-start;margin-bottom:9px;}
+.scsym{font-family:var(--mono);font-size:14px;font-weight:600;}
+.scsec{font-size:9px;color:var(--mu);margin-top:2px;text-transform:uppercase;letter-spacing:.04em;}
+.scpr{margin-left:auto;text-align:right;padding-right:52px;}
+.scltp{font-family:var(--mono);font-size:14px;font-weight:600;}
+.scchg{font-family:var(--mono);font-size:10px;margin-top:1px;}
+
+/* Probability ring */
+.prow{display:flex;align-items:center;gap:12px;margin-bottom:10px;}
+.rwrap{position:relative;flex-shrink:0;}
+.pring{transform:rotate(-90deg);}
+.ptrack{fill:none;}.pfill{fill:none;stroke-linecap:round;transition:stroke-dashoffset .9s ease;}
+.rcen{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;}
+.rpct{font-family:var(--mono);font-size:13px;font-weight:600;line-height:1;}
+.rlbl{font-size:8px;color:var(--mu);text-transform:uppercase;letter-spacing:.04em;margin-top:1px;}
+.pinfo{flex:1;min-width:0;}
+.pact{font-size:12px;font-weight:700;margin-bottom:3px;}
+.preason{font-size:10px;color:var(--mu2);line-height:1.5;}
+
+.sigs{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:10px;}
+.sig{font-size:9px;font-weight:500;padding:2px 7px;border-radius:4px;font-family:var(--mono);}
+.sg{background:rgba(0,229,160,.08);color:#4dffbb;border:1px solid rgba(0,229,160,.15);}
+.sr{background:rgba(255,64,96,.08);color:#ff8096;border:1px solid rgba(255,64,96,.15);}
+.sb{background:rgba(77,159,255,.08);color:#80b8ff;border:1px solid rgba(77,159,255,.15);}
+.sy{background:rgba(255,176,32,.08);color:#ffd066;border:1px solid rgba(255,176,32,.15);}
+.sp{background:rgba(167,139,250,.08);color:#c4b5fd;border:1px solid rgba(167,139,250,.15);}
+
+.mets{display:grid;grid-template-columns:repeat(4,1fr);gap:5px;margin-bottom:10px;}
+.met{background:var(--bg3);border-radius:6px;padding:6px 7px;}
+.ml{font-size:8px;color:var(--mu);text-transform:uppercase;letter-spacing:.04em;margin-bottom:2px;}
+.mv{font-family:var(--mono);font-size:11px;font-weight:500;}
+
+.tbox{background:var(--bg3);border-radius:7px;padding:9px 11px;display:grid;grid-template-columns:repeat(3,1fr);gap:7px;}
+.ti{display:flex;flex-direction:column;gap:2px;}
+.tl2{font-size:8px;color:var(--mu);text-transform:uppercase;letter-spacing:.04em;}
+.tv{font-family:var(--mono);font-size:11px;font-weight:600;}
+
+.empty{background:var(--bg2);border:1px solid var(--b);border-radius:12px;padding:28px;text-align:center;color:var(--mu);font-size:12px;line-height:1.7;}
+.lcard{background:var(--bg2);border:1px solid var(--b);border-radius:12px;padding:16px;margin-bottom:9px;display:flex;align-items:center;gap:10px;animation:sh 1.4s infinite;}
+@keyframes sh{0%,100%{opacity:.3}50%{opacity:.6}}
+.lb{background:var(--bg3);border-radius:5px;}
+
+.footer{font-size:10px;color:var(--mu);text-align:center;margin-top:24px;line-height:1.9;}
+</style>
+</head>
+<body>
+
+<!-- ═══ SETUP ═════════════════════════════════════════════════════ -->
+<div id="setup">
+<div class="sc">
+  <div class="brand">
+    <div class="bmark"><svg viewBox="0 0 18 18" fill="none"><path d="M9 2L15 6V12L9 16L3 12V6L9 2Z" stroke="#000" stroke-width="1.5" stroke-linejoin="round"/><path d="M9 6V12M6 8L9 6L12 8" stroke="#000" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+    <span class="bname">NSE AI SCANNER</span>
+    <span class="ftag">100% FREE</span>
+  </div>
+
+  <div class="sh1">Live NSE data + AI analysis.<br>Open this URL. That's it.</div>
+  <div class="ssub">No installation. No Python. No server. Works on your phone too. Powered by Angel One (live data) and Google Gemini (free AI).</div>
+
+  <div class="sstack">
+    <div class="ssi"><div class="ssi-l">Live data</div><div class="ssi-v">Angel One API</div><div class="ssi-f">Free with account</div></div>
+    <div class="ssi"><div class="ssi-l">AI analysis</div><div class="ssi-v">Google Gemini</div><div class="ssi-f">1500 free req/day</div></div>
+    <div class="ssi"><div class="ssi-l">Runs on</div><div class="ssi-v">Your browser</div><div class="ssi-f">Phone or PC</div></div>
+    <div class="ssi"><div class="ssi-l">Monthly cost</div><div class="ssi-v">Rs 0 forever</div><div class="ssi-f">No subscriptions</div></div>
+  </div>
+
+  <div class="stitle">Cloudflare Worker URL (your personal scanner backend)</div>
+  <div class="ig">
+    <div class="ilbl">Worker URL</div>
+    <input class="inp" id="wurl" placeholder="https://your-worker.your-name.workers.dev">
+  </div>
+  <div class="ihint">From your Cloudflare Workers dashboard. See SETUP.txt for how to create it (5 min).</div>
+
+  <div class="stitle">Angel One SmartAPI credentials</div>
+  <div class="ig2">
+    <div class="ig"><div class="ilbl">API Key</div><input class="inp" id="akey" type="password" placeholder="aBcD1234"></div>
+    <div class="ig"><div class="ilbl">Client ID</div><input class="inp" id="aclient" placeholder="A123456"></div>
+    <div class="ig"><div class="ilbl">Password / MPIN</div><input class="inp" id="apass" type="password" placeholder="Your login password"></div>
+    <div class="ig"><div class="ilbl">TOTP Secret (32 chars)</div><input class="inp" id="atotp" type="password" placeholder="JBSWY3DPEHPK3PXP..."></div>
+  </div>
+
+  <div class="stitle">Google Gemini API key (free AI)</div>
+  <div class="ig">
+    <div class="ilbl">Gemini Key</div>
+    <input class="inp" id="gkey" type="password" placeholder="AIzaSy...">
+  </div>
+  <div class="ihint">Free at <a href="https://aistudio.google.com/app/apikey" target="_blank">aistudio.google.com/app/apikey</a> → Sign in with Google → Create API Key. No credit card needed.</div>
+
+  <button class="go-btn" id="go-btn" onclick="startApp()">Start Scanner</button>
+  <div class="err" id="err"></div>
+  <div class="ok" id="ok-msg"></div>
+</div>
+</div>
+
+<!-- ═══ APP ═════════════════════════════════════════════════════ -->
+<div id="app">
+  <div class="top">
+    <div class="tl">
+      <div class="ld"></div>
+      <span class="tname">NSE AI SCANNER</span>
+      <div class="tbgs">
+        <span class="tbg tbg-a">ANGEL ONE</span>
+        <span class="tbg tbg-g">GEMINI</span>
+        <span class="tbg tbg-f">FREE</span>
+      </div>
+    </div>
+    <div class="tr2">
+      <div class="chip" id="ts">--:--</div>
+      <div class="chip" id="mkt-chip">--</div>
+      <button class="rbtn" id="rbtn" onclick="doScan()"><span id="rico">⟳</span> Refresh</button>
+    </div>
+  </div>
+
+  <div class="rib">
+    <div class="ri"><div class="ri-l">Nifty 50</div><div class="ri-v" id="r1">—</div><div class="ri-s" id="r1s">—</div></div>
+    <div class="ri"><div class="ri-l">Bank Nifty</div><div class="ri-v" id="r2">—</div><div class="ri-s" id="r2s">—</div></div>
+    <div class="ri"><div class="ri-l">India VIX</div><div class="ri-v" id="r3">—</div><div class="ri-s" id="r3s">—</div></div>
+    <div class="ri"><div class="ri-l">Nifty PCR</div><div class="ri-v" id="r4">—</div><div class="ri-s" id="r4s">—</div></div>
+    <div class="ri"><div class="ri-l">FII Net F&amp;O</div><div class="ri-v" id="r5">—</div><div class="ri-s" id="r5s">—</div></div>
+    <div class="ri"><div class="ri-l">Max Pain</div><div class="ri-v am" id="r6">—</div><div class="ri-s" id="r6s">—</div></div>
+    <div class="ri"><div class="ri-l">Adv / Dec</div><div class="ri-v" id="r7">—</div><div class="ri-s" id="r7s">—</div></div>
+    <div class="ri"><div class="ri-l">Signals</div><div class="ri-v" id="r8">—</div><div class="ri-s or">live</div></div>
+  </div>
+
+  <div class="main">
+    <div class="reg nr" id="reg">
+      <div class="reg-ico ri-neu" id="reg-ico">⏳</div>
+      <div class="reg-body">
+        <div class="reg-title" id="reg-title">Scanning live NSE data...</div>
+        <div class="reg-desc" id="reg-desc">Fetching Angel One data to determine today's market regime</div>
+      </div>
+      <div class="reg-bdg rb-n" id="reg-bdg">LOADING</div>
+    </div>
+
+    <div class="aibox">
+      <div class="aihdr">
+        <div class="ailbl">AI Market Briefing</div>
+        <div class="aibdg">Google Gemini</div>
+        <div class="aifree">FREE</div>
+      </div>
+      <div class="aith" id="aith"><span>Analyzing live NSE data</span><div class="dots"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div></div>
+      <div class="aitext" id="aiout" style="display:none"></div>
+    </div>
+
+    <div class="cols">
+      <div>
+        <div class="clbl bl"><span>↗ Bullish momentum</span><div class="cline cl-g"></div><span id="bcnt">—</span></div>
+        <div id="bcol"></div>
+      </div>
+      <div>
+        <div class="clbl br"><span>↘ Bearish momentum</span><div class="cline cl-r"></div><span id="rcnt">—</span></div>
+        <div id="rcol"></div>
+      </div>
+    </div>
+
+    <div class="footer">
+      Live data — Angel One SmartAPI &nbsp;·&nbsp; AI — Google Gemini (free) &nbsp;·&nbsp; Auto-refresh every 5 min during market hours<br>
+      <span>For educational use. Always use stop losses. Trading involves financial risk.</span>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── State ────────────────────────────────────────────────────────
+let CFG = {}, GKEY = "", WURL = "", autoT = null;
+const LS = localStorage;
+
+function save() {
+  LS.setItem("nse_wurl", WURL);
+  LS.setItem("nse_akey", CFG.api_key||"");
+  LS.setItem("nse_acli", CFG.client_id||"");
+  LS.setItem("nse_apass", CFG.password||"");
+  LS.setItem("nse_atotp", CFG.totp_secret||"");
+  LS.setItem("nse_gkey", GKEY);
+}
+function load() {
+  WURL = LS.getItem("nse_wurl")||"";
+  CFG = {
+    api_key:     LS.getItem("nse_akey")||"",
+    client_id:   LS.getItem("nse_acli")||"",
+    password:    LS.getItem("nse_apass")||"",
+    totp_secret: LS.getItem("nse_atotp")||"",
+  };
+  GKEY = LS.getItem("nse_gkey")||"";
+}
+
+// ── Helpers ──────────────────────────────────────────────────────
+const fmt = n => typeof n==="number" ? n.toLocaleString("en-IN") : n||"—";
+const sign = n => n>=0 ? "+" : "";
+const clr = n => n>0?"up":n<0?"dn":"am";
+
+function updateClock() {
+  const ist = new Date(new Date().toLocaleString("en-US",{timeZone:"Asia/Kolkata"}));
+  document.getElementById("ts").textContent = ist.toLocaleTimeString("en-IN",{hour:"2-digit",minute:"2-digit",second:"2-digit"});
+  const h=ist.getHours(), m=ist.getMinutes();
+  const chip=document.getElementById("mkt-chip");
+  if(h===9&&m<15){chip.textContent="PRE-OPEN";chip.style.color="var(--A)";}
+  else if((h===9&&m>=15)||(h>9&&h<15)||(h===15&&m<=30)){chip.textContent="● OPEN";chip.style.color="var(--G)";}
+  else{chip.textContent="CLOSED";chip.style.color="var(--mu2)";}
+}
+
+function updateRibbon(m) {
+  const n=m.nifty||{},bn=m.banknifty||{},v=m.vix||{},fi=m.fii||{};
+  const set=(id,cls,val,sid,scls,sval)=>{
+    document.getElementById(id).className="ri-v "+cls;
+    document.getElementById(id).textContent=val;
+    document.getElementById(sid).className="ri-s "+scls;
+    document.getElementById(sid).textContent=sval;
+  };
+  if(n.ltp) set("r1",clr(n.pChange),fmt(n.ltp),"r1s",clr(n.pChange),`${sign(n.pChange)}${n.pChange?.toFixed(2)}%`);
+  if(bn.ltp) set("r2",clr(bn.pChange),fmt(bn.ltp),"r2s",clr(bn.pChange),`${sign(bn.pChange)}${bn.pChange?.toFixed(2)}%`);
+  if(v.vix){const ok=v.vix<18;set("r3",ok?"up":"am",v.vix.toFixed(2),"r3s",ok?"up":"am",v.vix<14?"Low — buy opts":v.vix<20?"Moderate":"High");}
+  if(m.pcr!=null){const pc=m.pcr>1?"up":m.pcr<0.8?"dn":"am";set("r4",pc,m.pcr.toFixed(2),"r4s",pc,m.pcr>1.4?"Very bullish":m.pcr>1?"Bullish":m.pcr<0.7?"Very bearish":"Bearish");}
+  if(fi.fiiNet!=null){const fc=fi.fiiNet>=0?"up":"dn";set("r5",fc,`${sign(fi.fiiNet)}${fmt(fi.fiiNet)}Cr`,"r5s",fc,fi.fiiNet>=0?"Net long":"Net short");}
+  if(m.maxPain){document.getElementById("r6").textContent=fmt(m.maxPain);document.getElementById("r6s").textContent=`Exp:${m.expiry||"—"}`;}
+  if(m.advances!=null){const ac=m.advances>m.declines?"up":"dn";set("r7",ac,`${m.advances}/${m.declines}`,"r7s",ac,m.advances>m.declines?"Broad up":"Broad dn");}
+}
+
+function updateRegime(m, bull, bear) {
+  const reg=document.getElementById("reg"),ico=document.getElementById("reg-ico");
+  const ttl=document.getElementById("reg-title"),desc=document.getElementById("reg-desc"),bdg=document.getElementById("reg-bdg");
+  const n=m.nifty||{},v=m.vix||{},fi=m.fii||{};
+  reg.className="reg";ico.className="reg-ico";bdg.className="reg-bdg";
+  document.getElementById("r8").className=`ri-v ${m.bias>=0?"up":"dn"}`;
+  document.getElementById("r8").textContent=`${bull.length}B/${bear.length}S`;
+  if(m.bias===1){
+    reg.classList.add("br");ico.classList.add("ri-bull");bdg.classList.add("rb-b");
+    ico.textContent="↗";bdg.textContent="BULLISH REGIME";
+    ttl.textContent="Market is BULLISH — bullish picks ranked higher";
+    desc.textContent=`Nifty ${sign(n.pChange)}${n.pChange?.toFixed(2)}%, VIX ${v.vix} (${v.vix<18?"low — buy options":"elevated"}), PCR ${m.pcr} (${m.pcr>1?"bullish":"mixed"}), FII ${sign(fi.fiiNet)}₹${fmt(Math.abs(fi.fiiNet||0))}Cr. Adv/Dec ${m.advances}:${m.declines}. ${bull.length} bullish + ${bear.length} bearish signals found.`;
+  } else if(m.bias===-1){
+    reg.classList.add("rr");ico.classList.add("ri-bear");bdg.classList.add("rb-r");
+    ico.textContent="↘";bdg.textContent="BEARISH REGIME";
+    ttl.textContent="Market is BEARISH — bearish picks ranked higher";
+    desc.textContent=`Nifty ${sign(n.pChange)}${n.pChange?.toFixed(2)}%, VIX ${v.vix} (${v.vix>18?"elevated":"moderate"}), PCR ${m.pcr} (${m.pcr<1?"bearish":"mixed"}), FII ${sign(fi.fiiNet)}₹${fmt(Math.abs(fi.fiiNet||0))}Cr. ${bear.length} bearish signals. Use puts or sell calls.`;
+  } else {
+    reg.classList.add("nr");ico.classList.add("ri-neu");bdg.classList.add("rb-n");
+    ico.textContent="↔";bdg.textContent="NEUTRAL";
+    ttl.textContent="Market is MIXED — only high-conviction signals";
+    desc.textContent=`PCR ${m.pcr} neutral zone, VIX ${v.vix}, FII mixed. Trade only stocks with score above 75 and strong OI confirmation today.`;
+  }
+}
+
+function loadCards(id,n){let h="";for(let i=0;i<n;i++)h+=`<div class="lcard"><div class="lb" style="width:52px;height:32px"></div><div style="flex:1"><div class="lb" style="width:65%;height:10px;margin-bottom:6px"></div><div class="lb" style="width:45%;height:9px"></div></div></div>`;document.getElementById(id).innerHTML=h;}
+
+function ring(pct,bull){
+  const r=26,c=2*Math.PI*r,off=c*(1-pct/100),col=bull?"#00e5a0":"#ff4060";
+  return `<div class="rwrap" style="width:62px;height:62px"><svg class="pring" width="62" height="62" viewBox="0 0 62 62"><circle class="ptrack" cx="31" cy="31" r="${r}" stroke="rgba(255,255,255,0.05)" stroke-width="5"/><circle class="pfill" cx="31" cy="31" r="${r}" stroke="${col}" stroke-width="5" stroke-dasharray="${c.toFixed(1)}" stroke-dashoffset="${off.toFixed(1)}"/></svg><div class="rcen"><div class="rpct" style="color:${col}">${pct}%</div><div class="rlbl">success</div></div></div>`;
+}
+
+function renderCard(s, rank) {
+  const bull=s.isBull, col=bull?"var(--G)":"var(--R)", pc=s.pChange;
+  const delay=`animation-delay:${rank*.07}s`;
+  const sigs=(s.signals||[]).map((sg,i)=>`<span class="sig s${s.sigTypes[i]}">${sg}</span>`).join("");
+  const m=s.metrics||{}, t=s.trade||{};
+  const ab=s.marketAligned
+    ?`<div class="abadge ${bull?"ab-g":"ab-r"}">${bull?"↑ALIGNED":"↓ALIGNED"}</div>`
+    :`<div class="rankn">#${rank}</div>`;
+  return `<div class="scard ${bull?"sc-bull":"sc-bear"}" style="${delay}">${ab}
+    <div class="sct"><div><div class="scsym">${s.symbol}</div><div class="scsec">${s.sector}</div></div>
+    <div class="scpr"><div class="scltp" style="color:${col}">₹${fmt(s.ltp)}</div><div class="scchg" style="color:${col}">${sign(pc)}${Math.abs(pc).toFixed(2)}%</div></div></div>
+    <div class="prow">${ring(s.score,bull)}<div class="pinfo"><div class="pact" style="color:${col}">${t.action||"—"} · ${t.strike||"—"}</div><div class="preason">${s.reason||""}</div></div></div>
+    <div class="sigs">${sigs}</div>
+    <div class="mets">
+      <div class="met"><div class="ml">OI change</div><div class="mv" style="color:${bull?"var(--G)":"var(--R)"}">${m.oiChange||"—"}</div></div>
+      <div class="met"><div class="ml">PCR</div><div class="mv" style="color:${parseFloat(m.pcr||"1")>1?"var(--G)":"var(--R)"}">${m.pcr||"—"}</div></div>
+      <div class="met"><div class="ml">ATM IV</div><div class="mv" style="color:${parseFloat(m.iv||"25")<20?"var(--G)":"var(--A)"}">${m.iv||"—"}</div></div>
+      <div class="met"><div class="ml">Volume</div><div class="mv bl">${m.vol||"—"}</div></div>
+    </div>
+    <div class="tbox">
+      <div class="ti"><div class="tl2">Entry</div><div class="tv">LTP/Market</div></div>
+      <div class="ti"><div class="tl2">Stop loss</div><div class="tv" style="color:var(--R)">₹${fmt(t.sl)}</div></div>
+      <div class="ti"><div class="tl2">Target</div><div class="tv" style="color:${col}">₹${fmt(t.tgt)}</div></div>
+    </div>
+  </div>`;
+}
+
+// ── Gemini AI briefing ────────────────────────────────────────────
+async function getGeminiBriefing(mkt, bull, bear) {
+  const n=mkt.nifty||{},v=mkt.vix||{},fi=mkt.fii||{};
+  const prompt=`You are a sharp NSE F&O prop trader. Live Angel One data just came in. Direct, Indian market language, no fluff.
+
+LIVE DATA:
+Nifty: ${n.ltp} (${sign(n.pChange)}${n.pChange?.toFixed(2)}%), H:${n.high} L:${n.low}
+BankNifty: ${(mkt.banknifty||{}).ltp} (${sign((mkt.banknifty||{}).pChange)}${(mkt.banknifty||{}).pChange?.toFixed(2)}%)
+VIX: ${v.vix} — ${v.vix<13?"VERY LOW, buy aggressively":v.vix<18?"moderate, buy options ok":v.vix<22?"elevated, size down":"HIGH, prefer selling"}
+PCR: ${mkt.pcr} — ${mkt.pcr>1.5?"extreme bullish":mkt.pcr>1.2?"bullish":mkt.pcr>1?"mild bull":mkt.pcr<0.65?"extreme bearish":mkt.pcr<0.8?"bearish":"neutral"}
+FII: Rs${fmt(fi.fiiNet)}Cr ${fi.fiiNet>0?"NET LONG":"NET SHORT"}
+A/D: ${mkt.advances}/${mkt.declines}
+Max Pain: ${mkt.maxPain} (${mkt.expiry})
+Regime: ${mkt.bias===1?"BULLISH":mkt.bias===-1?"BEARISH":"NEUTRAL"}
+
+TOP BULLISH (live OI scan):
+${bull.slice(0,3).map((s,i)=>`${i+1}. ${s.symbol}: Rs${s.ltp} (+${s.pChange}%), OI ${s.metrics?.oiChange}, PCR ${s.metrics?.pcr}, IV ${s.metrics?.iv}, Score ${s.score}%`).join("\n")||"None found"}
+
+TOP BEARISH (live OI scan):
+${bear.slice(0,3).map((s,i)=>`${i+1}. ${s.symbol}: Rs${s.ltp} (${s.pChange}%), OI ${s.metrics?.oiChange}, PCR ${s.metrics?.pcr}, IV ${s.metrics?.iv}, Score ${s.score}%`).join("\n")||"None found"}
+
+Write exactly 3 paragraphs (no headers, no bullets, plain text only):
+1. How to trade this session — aggressive or cautious, buy or sell options, what VIX+PCR+FII together mean for today's approach
+2. The single best bullish trade — specific reasoning using OI, PCR, and IV data
+3. The single best bearish trade and today's key risk/warning
+
+Max 190 words. Write like a confident prop trader briefing, not a textbook.`;
+
+  const url=`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GKEY}`;
+  const r=await fetch(url,{
+    method:"POST",headers:{"Content-Type":"application/json"},
+    body:JSON.stringify({contents:[{parts:[{text:prompt}]}],generationConfig:{maxOutputTokens:450,temperature:0.75}})
+  });
+  if(!r.ok) throw new Error("Gemini "+r.status);
+  const d=await r.json();
+  return d.candidates?.[0]?.content?.parts?.[0]?.text||"Analysis unavailable.";
+}
+
+// ── Main scan ─────────────────────────────────────────────────────
+async function doScan() {
+  const btn=document.getElementById("rbtn"), ico=document.getElementById("rico");
+  btn.disabled=true; ico.className="spin"; ico.textContent="↻";
+  document.getElementById("aith").style.display="flex";
+  document.getElementById("aiout").style.display="none";
+  loadCards("bcol",4); loadCards("rcol",4);
+  document.getElementById("bcnt").textContent="—";
+  document.getElementById("rcnt").textContent="—";
+
+  try {
+    const resp = await fetch(`${WURL}/scan`, {
+      method:"POST",
+      headers:{"Content-Type":"application/json"},
+      body: JSON.stringify(CFG),
+      signal: AbortSignal.timeout(60000),
+    });
+    if(!resp.ok) {
+      const err = await resp.json().catch(()=>({error:"Server error"}));
+      throw new Error(err.error || `HTTP ${resp.status}`);
+    }
+    const data = await resp.json();
+    if(!data.ok) throw new Error(data.error || "Scan failed");
+
+    const m=data.market, bull=data.bullStocks||[], bear=data.bearStocks||[];
+    updateRibbon(m); updateRegime(m, bull, bear);
+    document.getElementById("bcnt").textContent=`${bull.length} stocks`;
+    document.getElementById("rcnt").textContent=`${bear.length} stocks`;
+    setTimeout(()=>{
+      document.getElementById("bcol").innerHTML = bull.length
+        ? bull.map((s,i)=>renderCard(s,i+1)).join("")
+        : `<div class="empty">No strong bullish signals right now.<br>Market may be bearish or consolidating.</div>`;
+      document.getElementById("rcol").innerHTML = bear.length
+        ? bear.map((s,i)=>renderCard(s,i+1)).join("")
+        : `<div class="empty">No strong bearish signals right now.<br>Market may be bullish or flat.</div>`;
+    }, 150);
+
+    // AI briefing
+    if(GKEY) {
+      try {
+        const ai = await getGeminiBriefing(m, bull, bear);
+        document.getElementById("aith").style.display="none";
+        const el=document.getElementById("aiout"); el.style.display="block";
+        el.innerHTML=ai.split(/\n\n+/).map(p=>p.trim()).filter(Boolean).map(p=>`<p>${p}</p>`).join("");
+      } catch(e) {
+        document.getElementById("aith").style.display="none";
+        const el=document.getElementById("aiout"); el.style.display="block";
+        el.textContent="Gemini unavailable — check your API key. Stock signals above are fully working.";
+      }
+    } else {
+      document.getElementById("aith").style.display="none";
+      const el=document.getElementById("aiout"); el.style.display="block";
+      el.textContent="Add Gemini key on the settings screen for AI briefings. Live NSE data and signals are working.";
+    }
+  } catch(e) {
+    document.getElementById("bcol").innerHTML=`<div class="empty" style="color:var(--R)">Error: ${e.message}<br><br>Common fixes:<br>• Angel One login failed — check credentials<br>• Worker URL wrong — re-paste from Cloudflare</div>`;
+    document.getElementById("rcol").innerHTML="";
+    document.getElementById("aith").style.display="none";
+    const el=document.getElementById("aiout"); el.style.display="block";
+    el.textContent=`Scan error: ${e.message}`;
+    el.style.color="var(--R)";
+  }
+
+  btn.disabled=false; ico.className=""; ico.textContent="⟳";
+  clearTimeout(autoT);
+  autoT = setTimeout(doScan, 5*60*1000); // auto-refresh every 5 min
+}
+
+// ── Setup flow ────────────────────────────────────────────────────
+async function startApp() {
+  const wurl   = document.getElementById("wurl").value.trim().replace(/\/$/,"");
+  const akey   = document.getElementById("akey").value.trim();
+  const aclient= document.getElementById("aclient").value.trim();
+  const apass  = document.getElementById("apass").value.trim();
+  const atotp  = document.getElementById("atotp").value.trim();
+  const gkey   = document.getElementById("gkey").value.trim();
+  const err = document.getElementById("err"), ok = document.getElementById("ok-msg");
+  err.style.display="none"; ok.style.display="none";
+
+  if(!wurl || !wurl.startsWith("https://")) {
+    err.textContent="Please enter your Cloudflare Worker URL (starts with https://)";
+    err.style.display="block"; return;
+  }
+  if(!aclient || !apass) {
+    err.textContent="Angel One Client ID and Password are required.";
+    err.style.display="block"; return;
+  }
+
+  const btn=document.getElementById("go-btn");
+  btn.disabled=true; btn.textContent="Connecting...";
+
+  try {
+    const ping = await fetch(`${wurl}/ping`, { signal: AbortSignal.timeout(8000) });
+    if(!ping.ok) throw new Error("Worker not responding");
+    WURL = wurl;
+    CFG = { api_key: akey, client_id: aclient, password: apass, totp_secret: atotp };
+    GKEY = gkey;
+    save();
+    ok.textContent="Worker connected! Starting scanner...";
+    ok.style.display="block";
+    setTimeout(()=>{
+      document.getElementById("setup").style.display="none";
+      document.getElementById("app").style.display="block";
+      setInterval(updateClock, 1000); updateClock();
+      doScan();
+    }, 800);
+  } catch(e) {
+    btn.disabled=false; btn.textContent="Start Scanner";
+    err.innerHTML=`Cannot reach Worker URL.<br>Make sure you deployed the worker.js to Cloudflare correctly.<br>Check SETUP.txt for step-by-step instructions.`;
+    err.style.display="block";
+  }
+}
+
+// ── On load — restore saved values ───────────────────────────────
+(function init() {
+  load();
+  if(WURL) document.getElementById("wurl").value = WURL;
+  if(CFG.api_key) document.getElementById("akey").value = CFG.api_key;
+  if(CFG.client_id) document.getElementById("aclient").value = CFG.client_id;
+  if(CFG.password) document.getElementById("apass").value = CFG.password;
+  if(CFG.totp_secret) document.getElementById("atotp").value = CFG.totp_secret;
+  if(GKEY) document.getElementById("gkey").value = GKEY;
+})();
+</script>
+</body>
+</html>
