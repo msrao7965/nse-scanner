@@ -45,4 +45,4 @@ Header names are case-insensitive. ISO dates (`YYYY-MM-DD`) are recommended. Use
 
 ## License and market data
 
-The app code in this repository is provided under the MIT License. This does not grant rights to third-party exchange data. Check the applicable provider and exchange terms before using, redistributing, or commercializing any imported dataset or offering data-backed services.
+No separate license for third-party market data is included. Check the applicable provider and exchange terms before using, redistributing, or commercializing any imported dataset or offering data-backed services.
